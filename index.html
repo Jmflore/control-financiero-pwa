@@ -255,6 +255,8 @@
         'AKfycbxHnonXJiFWvP1VywXQGyF6ndcTgPaT1wdnJUSXUsBS5Lu-8LubkJRakY5QhJfp3-0UbQ/' +
         'exec';
 
+      const CLAVE_OPCIONES = 'control-financiero-opciones-v2';
+
       const formulario = document.getElementById('formulario');
       const fecha = document.getElementById('fecha');
       const tipo = document.getElementById('tipo');
@@ -312,26 +314,77 @@
         });
       }
 
+      function aplicarOpciones(datos) {
+        if (
+          !datos ||
+          !datos.categorias ||
+          !Array.isArray(datos.cuentas)
+        ) {
+          throw new Error('Google devolvió opciones incompletas.');
+        }
+
+        opciones = datos;
+        llenarSelector(cuenta, opciones.cuentas, 'Selecciona una cuenta');
+        cuenta.disabled = false;
+
+        if (tipo.value) {
+          const lista = opciones.categorias[tipo.value] || [];
+          llenarSelector(categoria, lista, 'Selecciona una categoría');
+          categoria.disabled = lista.length === 0;
+        }
+      }
+
       async function cargarOpciones() {
+        let hayCopiaLocal = false;
+
+        try {
+          const copia = localStorage.getItem(CLAVE_OPCIONES);
+
+          if (copia) {
+            aplicarOpciones(JSON.parse(copia));
+            hayCopiaLocal = true;
+          }
+        } catch (error) {
+          localStorage.removeItem(CLAVE_OPCIONES);
+        }
+
         if (!navigator.onLine) {
-          mostrarMensaje('Conéctate a Internet para cargar las opciones.', 'error');
+          if (!hayCopiaLocal) {
+            mostrarMensaje(
+              'Conéctate a Internet para cargar las opciones.',
+              'error'
+            );
+          }
           return;
         }
 
-        mostrarMensaje('Cargando categorías y cuentas...', 'cargando');
+        if (!hayCopiaLocal) {
+          mostrarMensaje('Cargando categorías y cuentas...', 'cargando');
+        }
 
         try {
-          const respuesta = await solicitarJsonp({ accion: 'opciones' });
+          const respuesta = await solicitarJsonp(
+            { accion: 'opciones' },
+            60000
+          );
+
           if (!respuesta.correcto) {
             throw new Error(respuesta.mensaje || 'No se recibieron las opciones.');
           }
 
-          opciones = respuesta.datos;
-          llenarSelector(cuenta, opciones.cuentas, 'Selecciona una cuenta');
-          cuenta.disabled = false;
+          aplicarOpciones(respuesta.datos);
+          localStorage.setItem(
+            CLAVE_OPCIONES,
+            JSON.stringify(respuesta.datos)
+          );
           mostrarMensaje('', '');
         } catch (error) {
-          mostrarMensaje('No se pudieron cargar las opciones: ' + error.message, 'error');
+          if (!hayCopiaLocal) {
+            mostrarMensaje(
+              'No se pudieron cargar las opciones: ' + error.message,
+              'error'
+            );
+          }
         }
       }
 
@@ -360,7 +413,7 @@
         return new Promise(function (resolve) { window.setTimeout(resolve, ms); });
       }
 
-      function solicitarJsonp(parametros, limiteMs = 20000) {
+      function solicitarJsonp(parametros, limiteMs = 60000) {
         return new Promise(function (resolve, reject) {
           const callback = '__finanzas_' + Date.now() + '_' +
             Math.random().toString(36).slice(2);
@@ -401,14 +454,24 @@
       }
 
       async function consultarEstado(id) {
-        for (let intento = 0; intento < 15; intento += 1) {
-          await esperar(900);
-          const estado = await solicitarJsonp(
-            { accion: 'estado', id: id },
-            12000
-          );
-          if (estado.listo) return estado;
+        let ultimoError = null;
+
+        for (let intento = 0; intento < 5; intento += 1) {
+          await esperar(intento === 0 ? 1200 : 2000);
+
+          try {
+            const estado = await solicitarJsonp(
+              { accion: 'estado', id: id },
+              60000
+            );
+
+            if (estado.listo) return estado;
+          } catch (error) {
+            ultimoError = error;
+          }
         }
+
+        if (ultimoError) throw ultimoError;
         throw new Error('No se pudo confirmar el registro.');
       }
 
@@ -473,7 +536,9 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {
-          navigator.serviceWorker.register('./sw.js');
+          navigator.serviceWorker.register('./sw.js', {
+            updateViaCache: 'none'
+          });
         });
       }
     </script>

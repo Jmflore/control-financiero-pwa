@@ -251,7 +251,7 @@
     </div>
 
     <script>
-      const API_URL = 'https://script.google.com/macros/s/' +
+      const API_URL = 'https://script.google.com/a/*/macros/s/' +
         'AKfycbxHnonXJiFWvP1VywXQGyF6ndcTgPaT1wdnJUSXUsBS5Lu-8LubkJRakY5QhJfp3-0UbQ/' +
         'exec';
 
@@ -536,7 +536,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {
-          navigator.serviceWorker.register('./sw.js', {
+          navigator.serviceWorker.register('./sw.js?v=3', {
             updateViaCache: 'none'
           });
         });

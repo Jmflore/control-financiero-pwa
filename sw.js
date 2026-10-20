@@ -1,8 +1,8 @@
-const CACHE_NAME = 'control-financiero-v3';
+const CACHE_NAME = 'control-financiero-v4';
 
 const ARCHIVOS = [
   './',
-  './index.html',
+  './index.html?v=4',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png'
@@ -57,7 +57,7 @@ self.addEventListener('fetch', function (evento) {
       })
       .catch(function () {
         return caches.match(solicitud).then(function (respuestaGuardada) {
-          return respuestaGuardada || caches.match('./index.html');
+          return respuestaGuardada || caches.match('./index.html?v=4');
         });
       })
   );

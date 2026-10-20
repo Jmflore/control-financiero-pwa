@@ -251,11 +251,11 @@
     </div>
 
     <script>
-      const API_URL = 'https://script.google.com/a/*/macros/s/' +
-        'AKfycbxHnonXJiFWvP1VywXQGyF6ndcTgPaT1wdnJUSXUsBS5Lu-8LubkJRakY5QhJfp3-0UbQ/' +
+      const API_URL = 'https://script.google.com/macros/s/' +
+        'AKfycbxpVCmUYMFD-GlwO0MCD63MQRjHQi-SKUrxe2h3ac99ijrdnUKWJ6lkjPMbButy6lEnFg/' +
         'exec';
 
-      const CLAVE_OPCIONES = 'control-financiero-opciones-v2';
+      const CLAVE_OPCIONES = 'control-financiero-opciones-v4';
 
       const formulario = document.getElementById('formulario');
       const fecha = document.getElementById('fecha');
@@ -536,7 +536,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {
-          navigator.serviceWorker.register('./sw.js?v=3', {
+          navigator.serviceWorker.register('./sw.js?v=4', {
             updateViaCache: 'none'
           });
         });
